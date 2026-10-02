@@ -7,7 +7,7 @@ from fastapi import FastAPI, UploadFile, File, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 from Bio import Entrez
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.messages import SystemMessage, HumanMessage
 from dotenv import load_dotenv
 
@@ -24,7 +24,13 @@ app.add_middleware(
 )
 
 Entrez.email = os.getenv("NCBI_EMAIL", "sporcu@universite.edu.tr")
-llm = ChatOpenAI(model="gpt-4o", temperature=0.1)
+
+# Ücretsiz Google Gemini Modeli (Flash - çok hızlı ve bedava)
+llm = ChatGoogleGenerativeAI(
+    model="gemini-1.5-flash",
+    google_api_key=os.getenv("GOOGLE_API_KEY"),
+    temperature=0.1
+)
 
 # --- SISTEM PROMPTLARI ---
 
@@ -124,7 +130,6 @@ async def ajan_program_incele(dosya: UploadFile = File(...)):
     dosya_adi = dosya.filename.lower()
     dosya_bayt = await dosya.read()
 
-    # Excel Okuma (.xlsx, .xls)
     if dosya_adi.endswith(('.xlsx', '.xls')):
         try:
             excel_verisi = pd.read_excel(io.BytesIO(dosya_bayt), sheet_name=None)
@@ -134,7 +139,6 @@ async def ajan_program_incele(dosya: UploadFile = File(...)):
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Excel okuma hatası: {str(e)}")
 
-    # Word Okuma (.docx)
     elif dosya_adi.endswith('.docx'):
         try:
             doc = docx.Document(io.BytesIO(dosya_bayt))
