@@ -2,7 +2,7 @@ fastapi
 uvicorn
 pydantic
 python-dotenv
-langchain-openai
+langchain-google-genai
 biopython
 pandas
 openpyxl
